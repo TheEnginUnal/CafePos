@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "CafePos": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:33836;http://localhost:33837"
+    }
+  }
+}

@@ -1,0 +1,276 @@
+﻿<UserControl x:Class="CafePos.Views.ProductSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="#1E1E1E">
+
+    <UserControl.Resources>
+        <Style x:Key="AdminButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#0078D7"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="EditButtonStyle" TargetType="Button" BasedOn="{StaticResource AdminButtonStyle}">
+            <Setter Property="Background" Value="#FF9800"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style x:Key="DeleteButtonStyle" TargetType="Button" BasedOn="{StaticResource AdminButtonStyle}">
+            <Setter Property="Background" Value="#E53935"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="15">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <!-- Kategoriler & Menü Grupları -->
+            <ColumnDefinition Width="2.5*"/>
+            <!-- Ürünler -->
+        </Grid.ColumnDefinitions>
+
+        <!-- SOL PANEL (Kategoriler ve Menü Grupları Alt Alta) -->
+        <Grid Grid.Column="0" Margin="0,0,10,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="1*"/>
+                <RowDefinition Height="1*"/>
+            </Grid.RowDefinitions>
+
+            <!-- ÜST SOL: KATEGORİ YÖNETİMİ -->
+            <Border Grid.Row="0" Background="#253342" CornerRadius="10" Margin="0,0,0,5" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="KATEGORİLER (Stok/Envanter)" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Kategori Adı" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="CatNameText" Height="35" FontSize="14" Background="#1E1E1E" Foreground="White" BorderThickness="0" Padding="5,5"/>
+                        </StackPanel>
+
+                        <Button x:Name="BtnSaveCategory" Grid.Column="1" Content="EKLE" Style="{StaticResource AdminButtonStyle}" Padding="10,5" VerticalAlignment="Bottom" Height="35" Click="SaveCategory_Click"/>
+                        <Button x:Name="BtnCancelCategory" Grid.Column="2" Content="İPTAL" Background="Gray" Foreground="White" BorderThickness="0" Margin="5,0,0,0" Padding="10,5" VerticalAlignment="Bottom" Height="35" Visibility="Collapsed" Click="CancelCategory_Click"/>
+                    </Grid>
+
+                    <ListView x:Name="CategoriesListView" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="White">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Adı" Width="140">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Foreground="White" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Düzenle" Style="{StaticResource EditButtonStyle}" Margin="0,0,5,0" Click="EditCategory_Click"/>
+                                                <Button Content="Sil" Style="{StaticResource DeleteButtonStyle}" Click="DeleteCategory_Click"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
+
+            <!-- ALT SOL: MENÜ GRUBU YÖNETİMİ -->
+            <Border Grid.Row="1" Background="#253342" CornerRadius="10" Margin="0,5,0,0" Padding="10">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="MENÜ GRUPLARI (POS Ekranı)" Foreground="White" FontSize="16" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,5,0">
+                            <TextBlock Text="Menü Grubu Adı" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="ProductTypeNameText" Height="35" FontSize="14" Background="#1E1E1E" Foreground="White" BorderThickness="0" Padding="5,5"/>
+                        </StackPanel>
+
+                        <Button x:Name="BtnSaveProductType" Grid.Column="1" Content="EKLE" Style="{StaticResource AdminButtonStyle}" Padding="10,5" VerticalAlignment="Bottom" Height="35" Click="SaveProductType_Click"/>
+                        <Button x:Name="BtnCancelProductType" Grid.Column="2" Content="İPTAL" Background="Gray" Foreground="White" BorderThickness="0" Margin="5,0,0,0" Padding="10,5" VerticalAlignment="Bottom" Height="35" Visibility="Collapsed" Click="CancelProductType_Click"/>
+                    </Grid>
+
+                    <ListView x:Name="ProductTypesListView" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="White">
+                        <ListView.ItemContainerStyle>
+                            <Style TargetType="ListViewItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            </Style>
+                        </ListView.ItemContainerStyle>
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Adı" Width="140">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Name}" Foreground="White" VerticalAlignment="Center"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Width="100">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <Button Content="Düzenle" Style="{StaticResource EditButtonStyle}" Margin="0,0,5,0" Click="EditProductType_Click"/>
+                                                <Button Content="Sil" Style="{StaticResource DeleteButtonStyle}" Click="DeleteProductType_Click"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- SAĞ PANEL: ÜRÜN YÖNETİMİ -->
+        <Border Grid.Column="1" Background="#253342" CornerRadius="10" Padding="15">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="ÜRÜN YÖNETİMİ" Foreground="White" FontSize="20" FontWeight="Bold" Margin="0,0,0,15"/>
+
+                <!-- Ürün Formu -->
+                <Grid Grid.Row="1" Margin="0,0,0,15">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- Satır 1 -->
+                    <Grid Grid.Row="0" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="1*"/>
+                            <ColumnDefinition Width="2*"/>
+                            <ColumnDefinition Width="1*"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="Kategori (Stok/Envanter)" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="CategoryCombo" Height="35" FontSize="14" DisplayMemberPath="Name" SelectedValuePath="Id" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,10,0">
+                            <TextBlock Text="Menü Grubu (POS)" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="ProductTypeCombo" Height="35" FontSize="14" DisplayMemberPath="Name" SelectedValuePath="Id" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2" Margin="0,0,10,0">
+                            <TextBlock Text="Ürün Adı" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="ProductNameText" Height="35" FontSize="14" Background="#1E1E1E" Foreground="White" BorderThickness="0" Padding="10,5"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="Fiyat (₺)" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <TextBox x:Name="ProductPriceText" Height="35" FontSize="14" Background="#1E1E1E" Foreground="White" BorderThickness="0" Padding="10,5"/>
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Satır 2 -->
+                    <Grid Grid.Row="1" Margin="0,0,0,10">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="1.5*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                            <TextBlock Text="Siparişin Gönderileceği Ekran" Foreground="#AAAAAA" FontSize="12" Margin="0,0,0,4"/>
+                            <ComboBox x:Name="TargetScreenCombo" Height="35" FontSize="14">
+                                <ComboBoxItem Content="Mutfak Ekranı" Tag="Kitchen"/>
+                                <ComboBoxItem Content="Barista Ekranı" Tag="Barista"/>
+                                <ComboBoxItem Content="Ekran Yok (Hazır Ürün)" Tag="None"/>
+                            </ComboBox>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Margin="0,0,10,0" VerticalAlignment="Bottom" Height="35">
+                            <CheckBox x:Name="IsStockTrackedCheck" Content="Stok Takibi Yapılsın" Foreground="White" FontSize="14" VerticalAlignment="Center" Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <Button x:Name="BtnSaveProduct" Grid.Column="2" Content="ÜRÜN EKLE" Width="140" Height="35" Style="{StaticResource AdminButtonStyle}" Margin="0,0,10,0" VerticalAlignment="Bottom" Click="SaveProduct_Click"/>
+                        <Button x:Name="BtnCancelProduct" Grid.Column="3" Content="İPTAL ET" Width="100" Height="35" Background="Gray" Foreground="White" BorderThickness="0" Visibility="Collapsed" VerticalAlignment="Bottom" Click="CancelProduct_Click"/>
+                    </Grid>
+                </Grid>
+
+                <!-- Ürün Listesi -->
+                <ListView x:Name="ProductsListView" Grid.Row="2" Background="Transparent" BorderThickness="0" Foreground="White">
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="ListViewItem">
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Margin" Value="0,2"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Kategori" Width="100" DisplayMemberBinding="{Binding CategoryName}"/>
+                            <GridViewColumn Header="Menü Grubu" Width="100" DisplayMemberBinding="{Binding ProductTypeName}"/>
+                            <GridViewColumn Header="Ürün Adı" Width="150" DisplayMemberBinding="{Binding Name}"/>
+                            <GridViewColumn Header="Hedef Ekra" Width="80" DisplayMemberBinding="{Binding TargetScreenText}"/>
+                            <GridViewColumn Header="Fiyat" Width="80" DisplayMemberBinding="{Binding Price, StringFormat={}{0:N2} ₺}"/>
+                            <GridViewColumn Width="130">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Content="Düzenle" Style="{StaticResource EditButtonStyle}" Margin="0,0,5,0" Click="EditProduct_Click"/>
+                                            <Button Content="Sil" Style="{StaticResource DeleteButtonStyle}" Click="DeleteProduct_Click"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </Border>
+    </Grid>
+    </UserControl>

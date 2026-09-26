@@ -1,0 +1,171 @@
+﻿<Window x:Class="CafePos.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Cafe POS Sistemi" Height="768" Width="1024"
+        WindowStartupLocation="CenterScreen"
+        WindowStyle="None" 
+        WindowState="Maximized"
+        Background="#1E1E1E">
+
+    <!-- BUTON VE MENÜ STİLLERİ -->
+    <Window.Resources>
+        <!-- Sol Menü Ana Buton Stili (Görseldeki Yuvarlak ve Koyu Tasarım) -->
+        <Style x:Key="MenuButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#364A5F"/>
+            <!-- Görseldeki buton rengi -->
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Height" Value="55"/>
+            <Setter Property="Margin" Value="15,6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <!-- CornerRadius="10" ile butonlara elips/yuvarlak hissiyatı veriyoruz -->
+                        <Border Background="{TemplateBinding Background}" CornerRadius="10">
+                            <!-- Margin="10,0,0,0" ile ikonun sol kenara çok yapışmasını engelliyoruz -->
+                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#4B637D"/>
+                                <!-- Üzerine gelince hafif açılan renk -->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Alt Menü Buton Stili -->
+        <Style x:Key="SubMenuButtonStyle" TargetType="Button" BasedOn="{StaticResource MenuButtonStyle}">
+            <Setter Property="Background" Value="#293A4C"/>
+            <!-- Alt menüler biraz daha koyu -->
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="Margin" Value="25,4,15,4"/>
+            <!-- Daha içeriden başlar -->
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Sol Menü Alanı Genişliği -->
+            <ColumnDefinition x:Name="MenuColumn" Width="280" />
+            <!-- Sağ İçerik Alanı -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- SOL MENÜ ALANI (Görseldeki Koyu Lacivert/Gri #253342) -->
+        <Border Grid.Column="0" Background="#253342">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="80"/>
+                    <!-- Üst Hamburger ve Başlık -->
+                    <RowDefinition Height="*"/>
+                    <!-- Menü Liste Alanı -->
+                    <RowDefinition Height="80"/>
+                    <!-- Çıkış Butonu -->
+                </Grid.RowDefinitions>
+
+                <!-- Hamburger İkonu ve Başlık -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="HamburgerButton" Content="≡" Click="HamburgerButton_Click" 
+                            FontSize="32" FontWeight="Bold" Foreground="White" Background="Transparent" BorderThickness="0" 
+                            Width="50" Height="60" Margin="15,0,0,0"/>
+                    <TextBlock x:Name="MenuTitle" Text="SUFLOR POS" Foreground="White" FontSize="24" FontWeight="Bold" 
+                               VerticalAlignment="Center" Margin="10,0,0,0"/>
+                </StackPanel>
+
+                <!-- MENÜ LİSTESİ -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+                    <StackPanel x:Name="MenuStackPanel" Margin="0,10,0,0">
+
+                        <!-- GÜN ÖZETİ -->
+                        <Button Tag="SummaryPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE787;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="GÜN ÖZETİ" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- ÖDEME VE MASALAR -->
+                        <Button Tag="TablesPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE819;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="ÖDEME VE MASALAR" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- MUTFAK EKRANI -->
+                        <Button Tag="KitchenPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xED56;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="MUTFAK EKRANI" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- BARİSTA EKRANI -->
+                        <Button Tag="BaristaPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE9D2;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="BARİSTA EKRANI" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- DEPO (STOK) -->
+                        <Button Tag="StockPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE8F1;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="DEPO (STOK)" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- RAPORLAR (Genişleyebilir Menü) - İSİMLENDİRME EKLENDİ -->
+                        <Button x:Name="ReportsMenuButton" Tag="ReportPage" Click="MenuButton_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE9F9;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="RAPORLAR" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <!-- AYARLAR (Genişleyebilir Menü) - İSİMLENDİRME EKLENDİ -->
+                        <Button x:Name="SettingsMenuButton" Click="ToggleSettingsMenu_Click" Style="{StaticResource MenuButtonStyle}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE713;" FontSize="20" Width="30" TextAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="AYARLAR ▼" VerticalAlignment="Center" Margin="15,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                            </StackPanel>
+                        </Button>
+
+                        <StackPanel x:Name="SettingsSubMenu" Visibility="Collapsed">
+                            <Button Tag="UserSettingsPage" Click="MenuButton_Click" Style="{StaticResource SubMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE748;" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="KULLANICI AYARLARI" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Tag="ProductSettingsPage" Click="MenuButton_Click" Style="{StaticResource SubMenuButtonStyle}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE748;" FontSize="16" Width="20" TextAlignment="Center" VerticalAlignment="Center"/>
+                                    <TextBlock Text="ÜRÜN AYARLARI" VerticalAlignment="Center" Margin="10,0,0,0" Visibility="{Binding Visibility, ElementName=MenuTitle}"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- POWER (ÇIKIŞ) BUTONU -->
+                <Button Grid.Row="2" Click="ExitButton_Click" 
+                        Background="Transparent" BorderThickness="0" 
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <TextBlock FontFamily="Segoe MDL2 Assets" Text="&#xE7E8;" FontSize="32" Foreground="#FF6B6B" ToolTip="Sistemi Kapat"/>
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- SAĞ İÇERİK ALANI (Koyu Gri #1E1E1E) -->
+        <Frame x:Name="ContentFrame" Grid.Column="1" NavigationUIVisibility="Hidden" Background="#1E1E1E" />
+
+    </Grid>
+</Window>
