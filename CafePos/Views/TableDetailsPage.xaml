@@ -32,6 +32,13 @@
             <Setter Property="FontSize" Value="18"/>
             <Setter Property="Margin" Value="0,5"/>
         </Style>
+
+        <!-- YENİ: Alt Operasyon Butonları İçin Daha Küçük Stil -->
+        <Style x:Key="OperationButtonStyle" TargetType="Button" BasedOn="{StaticResource PosButtonStyle}">
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Margin" Value="2,5"/>
+        </Style>
     </UserControl.Resources>
 
     <Grid>
@@ -40,7 +47,7 @@
             <ColumnDefinition Width="420"/>
         </Grid.ColumnDefinitions>
 
-        <!-- SOL TARAF: KATEGORİLER VE ÜRÜNLER -->
+        <!-- SOL TARAF: KATEGORİLER VE ÜRÜNLER (Değişiklik Yok) -->
         <Grid Grid.Column="0" Margin="15">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
@@ -129,12 +136,10 @@
 
                             <GridViewColumn Header="Fiyat" Width="80" DisplayMemberBinding="{Binding TotalPrice, StringFormat={}{0:N2} ₺}"/>
 
-                            <!-- SATIR İÇİ İŞLEM BUTONLARI -->
                             <GridViewColumn Width="130">
                                 <GridViewColumn.CellTemplate>
                                     <DataTemplate>
                                         <StackPanel Orientation="Horizontal">
-                                            <!-- Bunlar arka plandaki Click event'i içinde kontrol edilecek -->
                                             <Button Content="İkram" Width="55" Height="30" Background="#9C27B0" Foreground="White" FontWeight="Bold" BorderThickness="0" Margin="0,0,5,0" Click="TreatItem_Click"/>
                                             <Button Content="Sil/İade" Width="55" Height="30" Background="#E53935" Foreground="White" FontWeight="Bold" BorderThickness="0" Click="RemoveItem_Click"/>
                                         </StackPanel>
@@ -173,32 +178,41 @@
 
                 <Rectangle Grid.Row="2" Height="1" Fill="#364A5F" VerticalAlignment="Top"/>
 
+                <!-- TOPLAM TUTAR ALANI (GÜNCELLENDİ) -->
                 <StackPanel Grid.Row="3" Margin="0,5,0,15">
-                    <Grid>
-                        <TextBlock Text="Ara Toplam:" Foreground="#AAAAAA" FontSize="16" HorizontalAlignment="Left"/>
-                        <TextBlock x:Name="SubTotalText" Text="0.00 ₺" Foreground="#AAAAAA" FontSize="16" HorizontalAlignment="Right"/>
+                    <!-- Önceden ödenen tutar varsa göster, yoksa gizle (C# ile yöneteceğiz) -->
+                    <Grid x:Name="PaidAmountPanel" Visibility="Collapsed">
+                        <TextBlock Text="Önceden Ödenen:" Foreground="#FFCA28" FontSize="16" HorizontalAlignment="Left"/>
+                        <TextBlock x:Name="PaidAmountText" Text="0.00 ₺" Foreground="#FFCA28" FontSize="16" HorizontalAlignment="Right"/>
                     </Grid>
+
                     <Grid Margin="0,5,0,0">
-                        <TextBlock Text="GENEL TOPLAM:" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Left"/>
+                        <TextBlock Text="KALAN TOPLAM:" Foreground="White" FontSize="22" FontWeight="Bold" HorizontalAlignment="Left"/>
                         <TextBlock x:Name="GrandTotalText" Text="0.00 ₺" Foreground="#4CAF50" FontSize="26" FontWeight="Bold" HorizontalAlignment="Right"/>
                     </Grid>
                 </StackPanel>
 
-                <!-- İŞLEM BUTONLARI (x:Name Eklendi) -->
+                <!-- İŞLEM BUTONLARI -->
                 <StackPanel Grid.Row="4">
                     <Button Content="SİPARİŞİ MUTFAĞA GÖNDER" Style="{StaticResource ActionButtonStyle}" Background="#0078D7" Click="SendOrderButton_Click"/>
+
+                    <!-- YENİ OPERASYON BUTONLARI -->
+                    <UniformGrid Columns="4" Rows="1" Margin="0,0,0,5">
+                        <Button Content="Teslim Edildi" Background="#4CAF50" Style="{StaticResource OperationButtonStyle}" Click="DeliveredButton_Click"/>
+                        <Button Content="Barista Hazır" Background="#607D8B" Style="{StaticResource OperationButtonStyle}" Click="BaristaReadyButton_Click"/>
+                        <Button Content="Mutfak Hazır" Background="#795548" Style="{StaticResource OperationButtonStyle}" Click="KitchenReadyButton_Click"/>
+                        <Button Content="Masa Değiştir" Background="#673AB7" Style="{StaticResource OperationButtonStyle}" Click="ChangeTableButton_Click"/>
+                    </UniformGrid>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <!-- ÖDEME AL BUTONU -->
                         <Button x:Name="CheckoutButton" Grid.Column="0" Content="ÖDEME AL" Background="#4CAF50" Style="{StaticResource ActionButtonStyle}" Margin="0,5,5,5" Click="PayButton_Click"/>
                         <Button Grid.Column="1" Content="FİŞ YAZDIR" Background="#FF9800" Style="{StaticResource ActionButtonStyle}" Margin="5,5,0,5" Click="PrintTicketButton_Click"/>
                     </Grid>
 
-                    <!-- İPTAL BUTONU -->
                     <Button x:Name="CancelButton" Content="TÜMÜNÜ İPTAL ET" Background="#E53935" Style="{StaticResource ActionButtonStyle}" Click="CancelOrderButton_Click"/>
                 </StackPanel>
             </Grid>

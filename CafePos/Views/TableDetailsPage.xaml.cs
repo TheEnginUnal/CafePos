@@ -16,6 +16,7 @@ namespace CafePos.Views
     {
         private int _tableId;
         private string _tableName;
+        private decimal _totalPaidSoFar = 0; // Bu masadan daha önce alınan (parçalı) ödemeler
 
         public ObservableCollection<ProductType> MenuGroups { get; set; }
         public ObservableCollection<Product> DisplayedProducts { get; set; }
@@ -38,8 +39,6 @@ namespace CafePos.Views
             OrderItemsList.ItemsSource = OrderItems;
 
             this.Loaded += TableDetailsPage_Loaded;
-
-            // Yükleme tamamlandıktan sonra yetkileri uygula
             ApplyAuthorization();
         }
 
@@ -57,19 +56,14 @@ namespace CafePos.Views
                 MenuGroups.Clear();
                 foreach (var g in groups) MenuGroups.Add(g);
 
-                if (MenuGroups.Any())
-                {
-                    LoadProductsByGroupId(MenuGroups.First().Id);
-                }
+                if (MenuGroups.Any()) LoadProductsByGroupId(MenuGroups.First().Id);
             }
         }
 
         private void MenuGroupButton_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is ProductType selectedGroup)
-            {
                 LoadProductsByGroupId(selectedGroup.Id);
-            }
         }
 
         private void LoadProductsByGroupId(int groupId)
@@ -86,17 +80,26 @@ namespace CafePos.Views
         {
             using (var db = new AppDbContext())
             {
+                // Payments tablosunu da Include ediyoruz ki daha önce ödenen tutarı bulalım
                 var openTicket = db.Tickets
                                    .Include(t => t.TicketItems)
                                    .ThenInclude(ti => ti.Product)
+                                   .Include(t => t.Payments)
                                    .FirstOrDefault(t => t.TableId == _tableId && t.Status == TicketStatus.Open);
 
                 if (openTicket != null)
                 {
+                    _totalPaidSoFar = openTicket.Payments.Sum(p => p.Amount);
+
+                    if (_totalPaidSoFar > 0)
+                    {
+                        PaidAmountPanel.Visibility = Visibility.Visible;
+                        PaidAmountText.Text = $"{_totalPaidSoFar:N2} ₺";
+                    }
+
                     OrderItems.Clear();
                     foreach (var ti in openTicket.TicketItems)
                     {
-                        // Ürün ismini veritabanındaki duruma göre dinamik oluşturuyoruz (KALICI YAPI)
                         string displayName = ti.Product.Name;
                         if (ti.IsTreat) displayName = "[İKRAM] " + displayName;
                         if (ti.IsRefunded) displayName = "[İADE] " + displayName;
@@ -104,9 +107,9 @@ namespace CafePos.Views
                         OrderItems.Add(new OrderItemModel
                         {
                             ProductId = ti.ProductId,
-                            ProductName = displayName, // <-- Değişiklik burada
+                            ProductName = displayName,
                             Quantity = ti.Quantity,
-                            UnitPrice = ti.UnitPrice, // Ekranda 0 görünmesi için ProcessTicketItemAction içinde sıfırlıyoruz zaten
+                            UnitPrice = ti.UnitPrice,
                             IsSavedInDb = true
                         });
                     }
@@ -121,10 +124,7 @@ namespace CafePos.Views
             {
                 var existingItem = OrderItems.FirstOrDefault(x => x.ProductId == product.Id && !x.IsSavedInDb);
 
-                if (existingItem != null)
-                {
-                    existingItem.Quantity++;
-                }
+                if (existingItem != null) existingItem.Quantity++;
                 else
                 {
                     OrderItems.Add(new OrderItemModel
@@ -143,11 +143,20 @@ namespace CafePos.Views
             }
         }
 
+        // --- GÜNCELLENMİŞ HESAPLAMA METODU ---
         private void UpdateTotals()
         {
-            decimal total = OrderItems.Sum(x => x.TotalPrice);
-            SubTotalText.Text = (total / 1.10m).ToString("C2");
-            GrandTotalText.Text = total.ToString("C2");
+            // Sepetteki tüm ürünlerin toplamı (İkram/İadeler 0 TL olduğu için otomatik düşer)
+            decimal totalProducts = OrderItems.Sum(x => x.TotalPrice);
+
+            // Kalan Tutar = Toplam - Önceden Ödenen
+            decimal remaining = totalProducts - _totalPaidSoFar;
+
+            // Eğer indirim uygulandıysa kalan tutardan o da düşülmeli (İlerleyen aşamada eklenebilir)
+
+            if (remaining < 0) remaining = 0; // Negatife düşmemesi için önlem
+
+            GrandTotalText.Text = $"{remaining:N2} ₺";
         }
 
         private void IncreaseQty_Click(object sender, RoutedEventArgs e)
@@ -184,7 +193,6 @@ namespace CafePos.Views
             }
         }
 
-        // --- GÜVENLİK KONTROLLÜ İPTAL / İADE METODU ---
         private void RemoveItem_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is OrderItemModel item)
@@ -212,7 +220,6 @@ namespace CafePos.Views
             }
         }
 
-        // --- GÜVENLİK KONTROLLÜ İKRAM METODU ---
         private void TreatItem_Click(object sender, RoutedEventArgs e)
         {
             if ((sender as Button)?.DataContext is OrderItemModel item)
@@ -301,7 +308,6 @@ namespace CafePos.Views
             }
 
             string orderNote = OrderNoteTextBox.Text.Trim();
-            int activeTicketId = 0;
 
             using (var db = new AppDbContext())
             {
@@ -355,19 +361,181 @@ namespace CafePos.Views
                 }
 
                 db.SaveChanges();
-                activeTicketId = activeTicket.Id;
             }
 
-            var kitchenItems = newItems.Where(x => x.TargetScreen == TargetScreenType.Kitchen.ToString()).ToList();
-            var baristaItems = newItems.Where(x => x.TargetScreen == TargetScreenType.Barista.ToString()).ToList();
-
-            MessageBox.Show($"İlave siparişler başarıyla eklendi.\nMutfağa giden ürün sayısı: {kitchenItems.Count}\nBaristaya giden ürün sayısı: {baristaItems.Count}", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
-
+            MessageBox.Show("İlave siparişler başarıyla mutfağa/baristaya iletildi.", "Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
             OrderNoteTextBox.Text = string.Empty;
 
             var mainWindow = Window.GetWindow(this) as MainWindow;
             mainWindow?.ContentFrame.Navigate(new TablesPage());
         }
+
+        // --- YENİ OPERASYON BUTONLARI ---
+
+        private void DeliveredButton_Click(object sender, RoutedEventArgs e)
+        {
+            using (var db = new AppDbContext())
+            {
+                var table = db.Tables.Find(_tableId);
+                if (table != null)
+                {
+                    // Eğer masada açık bir adisyon yoksa uyarı ver
+                    bool hasOpenTicket = db.Tickets.Any(t => t.TableId == _tableId && t.Status == TicketStatus.Open);
+                    if (!hasOpenTicket)
+                    {
+                        MessageBox.Show("Bu masada açık bir adisyon bulunmuyor.", "Uyarı", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        return;
+                    }
+
+                    // Masanın durumunu Delivered (Teslim Edildi) olarak güncelle (Enum'daki adını kontrol ediniz)
+                    table.Status = TableStatus.Delivered;
+
+                    db.SaveChanges();
+
+                    MessageBox.Show("Masa 'Teslim Edildi' (Yeşil) olarak işaretlendi.", "İşlem Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                    // İşlem bittikten sonra Masalar (TablesPage) ekranına dön
+                    var mainWindow = Window.GetWindow(this) as MainWindow;
+                    mainWindow?.ContentFrame.Navigate(new TablesPage());
+                }
+            }
+        }
+
+        private void BaristaReadyButton_Click(object sender, RoutedEventArgs e)
+        {
+            using (var db = new AppDbContext())
+            {
+                // Açık adisyonu ürünleriyle beraber bul
+                var activeTicket = db.Tickets.Include(t => t.TicketItems)
+                                             .ThenInclude(ti => ti.Product)
+                                             .FirstOrDefault(t => t.TableId == _tableId && t.Status == TicketStatus.Open);
+
+                if (activeTicket != null)
+                {
+                    // Henüz hazır olmayan Barista ürünlerini filtrele
+                    var pendingBaristaItems = activeTicket.TicketItems
+                        .Where(ti => ti.Product.TargetScreen == TargetScreenType.Barista && ti.Status != TicketItemStatus.Ready)
+                        .ToList();
+
+                    if (pendingBaristaItems.Any())
+                    {
+                        // Ürünleri hazır olarak işaretle (Barista ekranından düşmesini sağlar)
+                        foreach (var item in pendingBaristaItems)
+                        {
+                            item.Status = TicketItemStatus.Ready;
+                        }
+
+                        // Masanın durumunu Barista Hazır (Siyah) olarak güncelle
+                        var table = db.Tables.Find(_tableId);
+                        if (table != null)
+                        {
+                            table.Status = TableStatus.BarReady;
+                        }
+
+                        db.SaveChanges();
+
+                        MessageBox.Show("Barista ürünleri 'Hazır' olarak işaretlendi ve masa durumu güncellendi.", "İşlem Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        // Güncel masa rengini görmek için masalar ekranına dön
+                        var mainWindow = Window.GetWindow(this) as MainWindow;
+                        mainWindow?.ContentFrame.Navigate(new TablesPage());
+                    }
+                    else
+                    {
+                        MessageBox.Show("Bu adisyonda hazırlanmayı bekleyen bir Barista ürünü bulunmuyor.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("Bu masada açık bir adisyon bulunamadı.", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void KitchenReadyButton_Click(object sender, RoutedEventArgs e)
+        {
+            using (var db = new AppDbContext())
+            {
+                var activeTicket = db.Tickets.Include(t => t.TicketItems)
+                                             .ThenInclude(ti => ti.Product)
+                                             .FirstOrDefault(t => t.TableId == _tableId && t.Status == TicketStatus.Open);
+
+                if (activeTicket != null)
+                {
+                    var pendingKitchenItems = activeTicket.TicketItems
+                        .Where(ti => ti.Product.TargetScreen == TargetScreenType.Kitchen && ti.Status != TicketItemStatus.Ready)
+                        .ToList();
+
+                    if (pendingKitchenItems.Any())
+                    {
+                        foreach (var item in pendingKitchenItems)
+                        {
+                            item.Status = TicketItemStatus.Ready;
+                        }
+
+                        var table = db.Tables.Find(_tableId);
+                        if (table != null)
+                        {
+                            table.Status = TableStatus.KitchenReady; // Mutfak hazır (örn: Kırmızı renk)
+                        }
+
+                        db.SaveChanges();
+
+                        MessageBox.Show("Mutfak ürünleri 'Hazır' olarak işaretlendi ve masa durumu güncellendi.", "İşlem Başarılı", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        var mainWindow = Window.GetWindow(this) as MainWindow;
+                        mainWindow?.ContentFrame.Navigate(new TablesPage());
+                    }
+                    else
+                    {
+                        MessageBox.Show("Bu adisyonda hazırlanmayı bekleyen bir Mutfak ürünü bulunmuyor.", "Bilgi", MessageBoxButton.OK, MessageBoxImage.Information);
+                    }
+                }
+            }
+        }
+
+        private void UpdateTicketItemsStatus(TargetScreenType targetScreen, TicketItemStatus newStatus)
+        {
+            using (var db = new AppDbContext())
+            {
+                var activeTicket = db.Tickets.Include(t => t.TicketItems)
+                                             .ThenInclude(ti => ti.Product)
+                                             .FirstOrDefault(t => t.TableId == _tableId && t.Status == TicketStatus.Open);
+
+                if (activeTicket != null)
+                {
+                    bool updated = false;
+                    foreach (var ti in activeTicket.TicketItems)
+                    {
+                        // Ürünün hedef ekranı belirtilen ekran ise ve henüz hazır değilse
+                        if (ti.Product.TargetScreen == targetScreen && ti.Status != newStatus)
+                        {
+                            ti.Status = newStatus;
+                            updated = true;
+                        }
+                    }
+
+                    if (updated) db.SaveChanges();
+                }
+            }
+        }
+
+        private void ChangeTableButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Yeni hazırladığımız Modal'ı açıyoruz
+            var changeWindow = new ChangeTableWindow(_tableId, _tableName);
+            changeWindow.Owner = Window.GetWindow(this); // Ana pencereye bağla ki ortalansın
+            changeWindow.ShowDialog();
+
+            // Eğer işlem (taşıma/birleştirme) başarılı olduysa, masalar ekranına geri dön
+            if (changeWindow.IsActionCompleted)
+            {
+                var mainWindow = Window.GetWindow(this) as MainWindow;
+                mainWindow?.ContentFrame.Navigate(new TablesPage());
+            }
+        }
+
+        // --- DİĞER BUTONLAR ---
 
         private void PayButton_Click(object sender, RoutedEventArgs e)
         {
@@ -406,7 +574,6 @@ namespace CafePos.Views
             try
             {
                 var mainWindow = Window.GetWindow(this) as MainWindow;
-
                 if (mainWindow != null && mainWindow.ContentFrame != null)
                 {
                     mainWindow.ContentFrame.Navigate(new TablesPage());
